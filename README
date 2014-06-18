@@ -1,0 +1,68 @@
+Team Members: Jin Zhang, Alec Macrae
+
+This application supports the following features:
+1. Account
+	1.1 Create new account: store password as salt and digest 
+	1.2 Login: try again if information is not correct, or the name already exists
+2. Quiz
+	2.1 Create and take a quiz: support 6 question types, 4 quiz options
+			(Question Types: Question Response, Fill Blank, Multi Choice, Picture Response, Multi Answer, Multi Blank)
+			(Quiz Options: random, multi, immedi, practice=doesn't record this activity)
+		2.1.1 practice mode: does not write record to database and earns practice makes perfect achievement (known bug: if the quiz has not been taken before, ie. does not has any records/history, and a user attempts to take it in practice mode, the quiz result page cannot be reached upon completion.)
+	2.2 Quiz summary page: display quiz info, various kinds of history and statistics of this quiz
+		2.2.1 Displayed tables are sortable by each column and, to avoid cluttering the page, display only the most relevant 5 rows. However, below each table there is a link to the full table above the link in case the user in interested in seeing a full list.
+		2.2.2 Tables include: the users past history of given quiz, top performers on the given quiz, top performers in the past day, users and their scores who have taken the quiz most recently, Summary statistics for user who have taken the quiz (includes a row for all users combined).  
+	2.3 Score: by number of correct answers, also display percent correct (first criteria to rank performance))
+	2.4 Time: keep record of date and completion time (secondary criteria to rank performance)
+	2.5 Quiz result page: display result info, various kinds of history and statistics of this quiz
+		2.5.1 Applies to all tables except users answers table intentionally: displayed tables are sortable by each column and, to avoid cluttering the page, display only the most relevant 5 rows. However, below each table there is a link to the full table above the link in case the user in interested in seeing a full list.
+		2.5.2 Tables include: the users history of the given quiz, the most recent history of the given quiz, and the user's friends history of the given quiz. 
+		2.5.3 The user can also challenge friends to the given quiz using the interface on this page
+	2.6 Quiz list: list all the quizzes
+3. History
+	3.1 Homepage: display various info, such as popular quizzes, abbreviated quiz activities of the user all users, friend's recent activities and achievements.
+	3.2 User Page: display the user's recent various quiz activities (quiz creating and quiz taking history, achievements earned, etc.). 
+	3.3 Quiz summary and result page: (see above 2.2, 2.5)
+	3.4 Usually when a name appears, there is a hyperlink to this user's page
+	3.5 Various full history pages can be reached from other pages on the website.
+4. Friends
+	4.1 Find a friend: go to a list of user, allow searching for a user in the search bar, notify user if the name doesn't exist
+	4.2 Friend List: list the user's friends (hyperlinks to their userpage)
+	4.3 User Page: if not friend, "add" button appears; otherwise, "remove" and "challenge" buttons appears
+			-"add" button: send a message, will appear in the sender's outbox but cannot be accepted by the sender
+			-"remove" button: remove the database record from table "friends" directly
+5. Messages
+	4.1 Homepage: show the number of unread messages, link to unread message list, inbox and outbox
+	4.2 Challenge: can be sent multiple times; appear both on user pages and quiz pages
+	4.3 Friend: accept button inside the message; can be sent multiple times before they become friends, but only get added once, 
+			attempts to accept the request after having become friends will go to a "friend exists" page
+6. Extensions Highlight
+	6.1 History: 
+		6.1.1 each quiz keep a history of how well users did when they took it (various history tables are displayed...see section 3)
+	6.2 Multi Blank Question: allow as many blanks as user wants anywhere in fill blank questions
+	6.3 Multi Answer Question: support in order or not
+	6.4 Achievements
+		6.4.1 All achievements mentioned in the handout are present with the addition of quiz rookie (took one quiz) and quiz guru (took 5 quizzes).
+		6.4.2 Achievements are displayed on the homepage for the user and the user's friends and on user pages. Each achievement has a gif associated with it when displayed and contains a tooltip describing how the achievement was earned when the mouse hovers over the image or text.
+		6.4.3 When achievements are earned the text showing that the achievement was earned is displayed immediately thereafter either on the homepage if the user just created a quiz or the quiz result page after completing a quiz. 
+	6.5 Administration
+		6.5.1 Allows admin user to promote other users to admin, and to demote other admin users to normal users.
+		6.5.2 Allows admin user to create announcements on the homepage, and to view the site statistics.
+		6.5.3 Allows admin user to remove a user from the site (remove user created quizzes, friend relationships involving that user, achievements earned by that user, and messages associated with that user as well.)
+		6.5.4 Allows admin user to clear quiz history or remove a quiz entirely from the quiz summary page.
+	6.6 Trivial
+		6.5.1 make grading case insensitive and not picky on extra space(' ')
+		6.5.2 multiple alternative answers for each score for almost any type of questions
+		6.5.3 display both the user's answers and the correct answers with true or false on result page
+		6.5.4 show unread messages and the number of unread messages
+		6.5.5 mark a message as "read" only when the receiver clicked on it (in case the sender clicked on it from outbox before the receiver)
+		6.5.6 enable users to see all their messages including sent friend requests and challenge requests in outbox 
+			(but the accept button in friend requests won't work)
+		6.5.7 accepting request from an existing friend redirects to a notice page instead of adding duplicate records to database 
+			(but users are allowed to send multiple requests before the friend relationship is built in database)
+		6.5.8 allow user to send challenge requests from a friend's user page where they choose the quiz from drop-down menu,
+			or from quiz summary or result page where they choose the friend from drop-down menu
+		6.5.9 display number of questions on quiz summary and result pages 
+		6.5.10 support percent correct comparison of scores
+		6.5.11 notify user if the name they search for doesn't exist
+		6.5.12 Hide password while typing

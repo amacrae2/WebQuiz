@@ -1,0 +1,55 @@
+
+package quizweb;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class Grader {
+	/* instance variable */
+	private Statement stmt;
+	
+	public Grader(Statement stmt) {
+		this.stmt = stmt;
+	}
+	
+	public boolean grade(int id, String answer) throws SQLException {
+		// get the question type
+		ResultSet rs = stmt.executeQuery("SELECT * FROM questions WHERE  question_id="+id);
+		rs.next();
+		int questionType = rs.getInt("type");
+		switch (questionType) {
+			case 1: 
+				String corrAnswer1 = rs.getString("answer");
+				if (gradeResponse(answer, corrAnswer1)) return true;
+				break;
+			case 2: 
+				String corrAnswer2 = rs.getString("answer");
+				if (gradeResponse(answer, corrAnswer2)) return true;
+				break;
+			case 3: 
+				String corrAnswer3 = rs.getString("answer");
+				if (gradeMultiChoice(answer, corrAnswer3)) return true;
+				break;
+			case 4: 
+				String corrAnswer4 = rs.getString("answer");
+				if (gradeResponse(answer, corrAnswer4)) return true;
+				break;
+			default: break;
+		}
+		return false;
+	}
+	
+	public boolean gradeResponse (String answer, String corrAnswer) {
+		String[] parts = corrAnswer.split(";");
+		for (int i=0; i<parts.length; i++) {
+			if (parts[i].equals(answer)) return true;
+		}
+		return false;
+	}
+	
+	public boolean gradeMultiChoice (String answer, String corrAnswer) {
+		if (corrAnswer.equals(answer)) return true;
+		return false;
+	}
+}

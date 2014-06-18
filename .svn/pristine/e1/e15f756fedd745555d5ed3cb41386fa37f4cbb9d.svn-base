@@ -1,0 +1,10 @@
+package quizweb;
+
+public class QuizWebConstants {
+
+	public static final int NUM_ROWS_BEFORE_CUTOFF = 5;
+	
+	public static final String DATE_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss";
+
+	
+}

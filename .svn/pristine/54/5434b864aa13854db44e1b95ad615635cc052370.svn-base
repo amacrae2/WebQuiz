@@ -1,0 +1,127 @@
+<%@page import="quizweb.HistoryManager"%>
+<%@page import="quizweb.HistoryRow"%>
+<%@page import="com.mysql.jdbc.Connection"%>
+<%@page import="java.util.*" %>
+<%@page import="java.sql.Statement" %>
+<%@page import="java.sql.ResultSet" %>
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Quiz Result</title>
+<style>
+table,th,td
+{
+border:1px solid black;
+}
+</style>
+<script type="text/javascript" src="sortable.js"></script>
+</head>
+<body>
+	<%
+	// get servlet context
+	ServletContext sc = request.getServletContext();
+	
+	// get score
+	int score = (Integer) sc.getAttribute("score");
+	String time = (String) request.getAttribute("TimeTaken");
+	String date = (String) request.getAttribute("DateTaken");
+	int quizId = (Integer) request.getAttribute("quiz_id");
+	%>	
+	<p>Your Score: <%=score %></p>
+	<p>Time Used: <%=time %></p>
+	<p>Date: <%=date %></p>
+	<table>
+		<tr>
+			<th>Your Answer</th>
+			<th>Correct Answers</th>
+		</tr>
+	<% 	
+	List<Integer> questionIds = (List<Integer>) sc.getAttribute("QuestionIdArray");
+	Statement stmt = (Statement) sc.getAttribute("StatementObject");
+	for (int i=0; i<questionIds.size(); i++) {
+		// get the question
+		int id = questionIds.get(i);
+		ResultSet rs = stmt.executeQuery("SELECT * FROM questions WHERE  question_id="+id);
+		rs.next();
+		
+		// get answers and correct answers	
+		String answer = (String) sc.getAttribute(Integer.toString(id));
+		String corrAnswer = rs.getString("answer");	
+		
+		// remove attribute for the question ??
+		sc.removeAttribute(Integer.toString(id));
+		sc.removeAttribute("EndTime");
+	%>
+		<tr>
+			<td><%=answer %></td>
+			<td><%=corrAnswer %></td>
+		</tr>
+	<%
+	}	
+	%>
+	</table class="sortable" id="anyid">
+<p>Your History:</p>
+<table class="sortable" id="anyid">
+     <tr>      
+         <th>Score</th>
+         <th>Date Taken</th>
+     </tr>
+<% 
+	Connection conn = (Connection) session.getAttribute("connection");
+	String username = (String) session.getAttribute("user");
+	List<HistoryRow> userHistory = HistoryManager.getUserHistory(conn, username,0,quizId);
+	for (int i = 0; i < userHistory.size(); i++) {
+		HistoryRow hRow = userHistory.get(i);
+		%>
+	     <tr>      
+	         <td><%=hRow.getScore()%></td>
+	         <td><%=hRow.getDateTaken()%></td>
+	     </tr>
+	 <% } %>
+</table>
+<p>Quiz History:</p>
+<table>
+     <tr>      
+     	 <th>User</th>
+         <th>Score</th>
+         <th>Time Taken</th>
+         <th>Date Taken</th>
+     </tr>
+<% 
+	List<HistoryRow> quizHistory = HistoryManager.getQuizScoreHistory(conn, quizId, 0);
+for (int i = 0; i < quizHistory.size(); i++) {
+	HistoryRow hRow = quizHistory.get(i);
+	%>
+     <tr>      
+         <td><%=hRow.getUsername()%></td>
+         <td><%=hRow.getScore()%></td>
+         <td><%=hRow.getTimeTaken()%></td>
+         <td><%=hRow.getDateTaken()%></td>
+     </tr>
+ <% } %>
+</table>
+
+	<form action="MessageServlet" method="post">
+		<input type="hidden" name="quizId" value=<%=quizId %>>		
+		<p>Choose A Friend: <select name="FriendSelector">
+		<%
+		try {
+			ResultSet rs = stmt.executeQuery("SELECT username_2 FROM friends WHERE username_1='"+username+"';");
+			while (rs.next()) {
+				String friend = rs.getString("username_2");
+			%>
+				<option value=<%=friend %>><%=friend %></option>
+			<%
+			}
+		} catch (java.sql.SQLException e) {
+			e.printStackTrace();
+		}		
+		%></select><input type="submit" name="button" value="Challenge Friend"></p>
+	</form>
+	
+	<p><a href="HomepageServlet">Back to Homepage</a></p>
+</body>
+		

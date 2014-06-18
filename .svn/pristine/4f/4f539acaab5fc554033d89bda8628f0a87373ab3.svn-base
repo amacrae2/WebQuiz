@@ -1,0 +1,8 @@
+<p>Question Title: </p>
+<p><textarea rows="1" cols="50" name="question_title"></textarea></p>
+<p>Question: </p>
+<p><textarea rows="4" cols="50" name="question_text"></textarea></p>
+<p>Multiple Choices: (Please separate each choice by ';')</p>
+<p><textarea rows="4" cols="50" name="multi_choices"></textarea></p>
+<p>Correct Choice: </p>
+<p><textarea rows="4" cols="50" name="correct_choices"></textarea></p>

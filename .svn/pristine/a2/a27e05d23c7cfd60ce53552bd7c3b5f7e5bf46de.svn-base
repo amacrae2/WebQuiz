@@ -1,0 +1,17 @@
+package quizweb;
+
+import java.util.Calendar;
+import java.util.Date;
+
+public class DateTimeManager {
+	
+	public static Date getDateForOneDayAgo() {
+		Date now = new Date();
+		Calendar c = Calendar.getInstance(); 
+		c.setTime(now); 
+		c.add(Calendar.DATE, -1);
+		Date oneDayAgo = c.getTime();
+		return oneDayAgo;
+	}
+
+}

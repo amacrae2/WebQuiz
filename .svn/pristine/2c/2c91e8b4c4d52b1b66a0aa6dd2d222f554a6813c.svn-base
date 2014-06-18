@@ -1,0 +1,293 @@
+package quizweb;
+
+import java.io.IOException;
+import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+
+/**
+ * Servlet implementation class HomepageServlet
+ */
+@WebServlet("/HomepageServlet")
+public class HomepageServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+	       
+    /**
+     * @see HttpServlet#HttpServlet()
+     */
+    public HomepageServlet() {
+        super();
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		doPost(request, response);
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		HttpSession session = request.getSession();
+		String username = (String) session.getAttribute("user");
+		Connection conn = MySQLUtil.getConnection();
+		session.setAttribute("connection", conn);
+		setUserIdToSession(conn, session, username);
+		setAttributesForPopularQuizNames(conn, request);
+		Date oneDayAgo = DateTimeManager.getDateForOneDayAgo();
+		setAttributesForAllRecentlyCreatedQuizzes(conn, request, oneDayAgo);
+		setAttributesForUsersRecentlyCreatedQuizzes(conn, request, username, oneDayAgo);
+		setAttributesForUsersRecentlyTakenQuizzes(conn, request, username, oneDayAgo);
+		setAttributesForUserHistory(conn, request, username);
+		setAttributesForUnreadMessages(username, request);
+		setAttributesForFriendsList(request, username, conn);
+		setAttributesForFriendsRecentlyCreatedQuizzes(conn, request, username, oneDayAgo);
+		setAttributesForFriendsRecentlyTakenQuizzes(conn, request, username, oneDayAgo);
+		
+		RequestDispatcher dispatch = request.getRequestDispatcher("Homepage.jsp"); 
+		dispatch.forward(request, response); 
+	}
+
+	private String convertFriendsListToString(List<String> friendsList) {
+		String friends = "";
+		for (int i = 0; i < friendsList.size(); i++) {
+			friends += friendsList.get(i) + ","; 
+		}
+		if (!friends.equals("")) {
+			friends = friends.substring(0, friends.length()-1);
+		}
+		return friends;
+	}
+
+	private void setAttributesForFriendsList(HttpServletRequest request, String username, Connection conn) {
+		List<String> friendsList = getFriendsList(username, conn);
+		request.setAttribute("friendsList", friendsList);
+	}
+
+	private List<String> getFriendsList(String username, Connection conn) {
+		Map<String,Object> params = new HashMap<String,Object>(); 
+		params.put("username_1", username);
+		List<String> friendsList = (List<String>)(List<?>) MySQLUtil.getQuery(conn, "username_2", "friends", params, true);
+		return friendsList;
+	}
+	
+	private void setAttributesForUnreadMessages(String username, HttpServletRequest request) {
+		ServletContext sc = request.getServletContext();
+		Statement stmt = (Statement) sc.getAttribute("StatementObject");
+		ResultSet rs;
+		try {
+			rs = (ResultSet) stmt.executeQuery("SELECT * FROM messages WHERE to_username='"+username+"' AND viewed='unread';");
+			int numUnread = 0;
+			while (rs.next()) {
+				numUnread++;
+			}
+			request.setAttribute("NumUnread", numUnread);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}		
+	}
+
+	private void setAttributesForUserHistory(Connection conn, HttpServletRequest request,
+			String username) {
+		List<HistoryRow> userHistory = HistoryManager.getUserHistory((com.mysql.jdbc.Connection) conn, username, 5);
+		request.setAttribute("userHistory", userHistory);
+	}
+
+	private void setAttributesForUsersRecentlyTakenQuizzes(
+			Connection conn, HttpServletRequest request, String username, Date oneDayAgo) {
+		Map<String,Object> params = new HashMap<String,Object>(); 
+		params.put("username", username);
+		String QuizNamesTag = "recentlyTakenQuizNames";
+		String QuizIdsTag = "recentlyTakenQuizIds";
+		setAttributesForRecentlyTakenQuizzes(conn, request, oneDayAgo, params, QuizNamesTag, QuizIdsTag, false);
+	}
+	
+	private void setAttributesForFriendsRecentlyTakenQuizzes(
+			Connection conn, HttpServletRequest request, String username, Date oneDayAgo) {
+		List<String> friendsList = getFriendsList(username, conn);
+		String friends = convertFriendsListToString(friendsList);
+		Map<String,Object> params = new HashMap<String,Object>(); 
+		params.put("username", friends);
+		String QuizNamesTag = "recentlyTakenFriendQuizNames";
+		String QuizIdsTag = "recentlyTakenFriendQuizIds";
+		setAttributesForRecentlyTakenQuizzes(conn, request, oneDayAgo, params, QuizNamesTag, QuizIdsTag, true);
+	}
+
+	private void setAttributesForRecentlyTakenQuizzes(Connection conn,
+			HttpServletRequest request, Date oneDayAgo,
+			Map<String, Object> params, String QuizNamesTag, String QuizIdsTag, boolean friends) {
+		List<Integer> recentlyTakenQuizzes = (List<Integer>)(List<?>) MySQLUtil.getQuery(conn, "quiz_id", "quizzes_taken", params, !friends, "quiz_id");
+		List<String> quizTakenTimes = (List<String>)(List<?>) MySQLUtil.getQuery(conn, "date_taken", "quizzes_taken", params, !friends, "quiz_id");
+		List<Integer> indices = DateTimeManager.findIndicesOfDatesToRemove(oneDayAgo,quizTakenTimes);
+		for (int i : indices) {
+			recentlyTakenQuizzes.remove(i);
+		}
+		List<Integer> recentlyTakenQuizIds = filterQuizIdsForUniqueness(recentlyTakenQuizzes);
+		String quizIds = convertQuizIdsToString(recentlyTakenQuizIds);
+		updateParamsForRecentQuizzesQuery(params, quizIds);
+		List<String> recentlyTakenQuizNames = (List<String>)(List<?>) MySQLUtil.getQuery(conn, "title", "quizzes", params, false);
+		request.setAttribute(QuizNamesTag, recentlyTakenQuizNames);
+		request.setAttribute(QuizIdsTag, recentlyTakenQuizIds);
+	}
+
+	private void updateParamsForRecentQuizzesQuery(Map<String, Object> params,
+			String quizIds) {
+		params.remove("username");
+		if (quizIds.length() < 1) {
+			params.put("quiz_id", 0);
+		} else {
+			params.put("quiz_id", quizIds.substring(0, quizIds.length()-1));
+		}
+	}
+
+	private String convertQuizIdsToString(List<Integer> recentlyTakenQuizIds) {
+		String quizIds = "";
+		for (int id: recentlyTakenQuizIds) {
+			quizIds += Integer.toString(id)+",";
+		}
+		return quizIds;
+	}
+
+	private List<Integer> filterQuizIdsForUniqueness(
+			List<Integer> recentlyTakenQuizzes) {
+		List<Integer> recentlyTakenQuizIds = new ArrayList<Integer>();
+		HashSet<Integer> lookup = new HashSet<Integer>();
+		for (int i: recentlyTakenQuizzes) {
+		    if (lookup.add(i)) {
+		        // Set.add returns false if item is already in the set
+		    	recentlyTakenQuizIds.add(i);
+		    }
+		}
+		return recentlyTakenQuizIds;
+	}
+	
+	private void setAttributesForAllRecentlyCreatedQuizzes(Connection conn, HttpServletRequest request, Date oneDayAgo) {
+		Map<String,Object> params = new HashMap<String,Object>(); 
+		String quizNameAttributeId = "recentlyCreatedQuizNames";
+		String quizIdArrtributeId = "recentlyCreatedQuizIds";
+		String quizCreateTimeArrtributeId = "recentlyCreatedQuizTimes";
+		setAttributesForRecentlyCreatedQuizzes(conn, request, oneDayAgo, params, quizNameAttributeId, quizIdArrtributeId, quizCreateTimeArrtributeId,false);
+	}
+
+	private void setAttributesForUsersRecentlyCreatedQuizzes(Connection conn, HttpServletRequest request, String username, Date oneDayAgo) {
+		Map<String,Object> params = new HashMap<String,Object>(); 
+		params.put("author", username);
+		String quizNameAttributeId = "recentlyCreatedUserQuizNames";
+		String quizIdArrtributeId = "recentlyCreatedUserQuizIds";
+		String quizCreateTimeArrtributeId = "recentlyCreatedUserQuizTimes";
+		setAttributesForRecentlyCreatedQuizzes(conn, request, oneDayAgo, params, quizNameAttributeId, quizIdArrtributeId, quizCreateTimeArrtributeId,false);
+	}
+	
+	private void setAttributesForFriendsRecentlyCreatedQuizzes(Connection conn, HttpServletRequest request, String username, Date oneDayAgo) {
+		List<String> friendsList = getFriendsList(username, conn);
+		String friends = convertFriendsListToString(friendsList);
+		Map<String,Object> params = new HashMap<String,Object>(); 
+		params.put("author", friends);
+		String quizNameAttributeId = "recentlyCreatedFriendQuizNames";
+		String quizIdArrtributeId = "recentlyCreatedFriendQuizIds";
+		String quizCreateTimeArrtributeId = "recentlyCreatedFriendQuizTimes";
+		setAttributesForRecentlyCreatedQuizzes(conn, request, oneDayAgo, params, quizNameAttributeId, quizIdArrtributeId, quizCreateTimeArrtributeId,true);
+	}
+
+	private void setAttributesForRecentlyCreatedQuizzes(
+			Connection conn, HttpServletRequest request, Date oneDayAgo,
+			Map<String, Object> params, String quizNameAttributeId,
+			String quizIdArrtributeId, String quizCreateTimeArrtributeId, boolean friends) {
+		List<String> recentlyCreatedQuizNames = (List<String>)(List<?>) MySQLUtil.getQuery(conn,"title", "quizzes", params, !friends, "date DESC");
+		List<Integer> recentlyCreatedQuizIds = (List<Integer>)(List<?>) MySQLUtil.getQuery(conn,"quiz_id", "quizzes", params, !friends, "date DESC");
+		List<String> quizCreateTimes = (List<String>)(List<?>) MySQLUtil.getQuery(conn,"date", "quizzes", params, !friends, "date DESC");
+		List<String> authors = (List<String>)(List<?>) MySQLUtil.getQuery(conn,"author", "quizzes", params, !friends, "date DESC");
+		List<Integer> indices = DateTimeManager.findIndicesOfDatesToRemove(oneDayAgo,quizCreateTimes);
+		for (int i : indices) {
+			recentlyCreatedQuizNames.remove(i);
+			recentlyCreatedQuizIds.remove(i);
+			quizCreateTimes.remove(i);
+			authors.remove(i);
+		}
+		request.setAttribute(quizNameAttributeId, recentlyCreatedQuizNames);
+		request.setAttribute(quizIdArrtributeId, recentlyCreatedQuizIds);
+		request.setAttribute(quizCreateTimeArrtributeId, quizCreateTimes);
+		if (friends) {
+			request.setAttribute("recentlyCreatedFriendQuizAuthors", authors);
+		}
+	}
+
+	private void setUserIdToSession(Connection conn, HttpSession session, String username) {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("username", username);
+		List<Integer> userId = (List<Integer>)(List<?>) MySQLUtil.getQuery(conn, "user_id", "users", params, true);
+		session.setAttribute("user_id", userId.get(0));
+	}
+
+	
+	private List<String> setAttributesForPopularQuizNames(Connection conn, HttpServletRequest request) { 
+		List<String> popQuizNames = new ArrayList<String>();
+		List<String> popQuizIds = new ArrayList<String>();
+		List<Integer> mostPopularQuizIds = findPopularQuizIds(conn, request);
+		Map<String,Object> params = new HashMap<String,Object>();
+		for (Integer id: mostPopularQuizIds) {
+			if (id > 0) {
+				params.put("quiz_id", id);
+				List<String> names = (List<String>)(List<?>) MySQLUtil.getQuery(conn, "title", "quizzes",params,false);
+				popQuizNames.add(names.get(0));
+				popQuizIds.add(Integer.toString(id));
+			}
+		}
+		request.setAttribute("popularQuizzes", popQuizNames);
+		request.setAttribute("popularQuizIds", popQuizIds);
+		return popQuizNames;
+	}
+	
+
+	private List<Integer> findPopularQuizIds(Connection conn, HttpServletRequest request) {
+		List<Integer> quizzesTaken = (List<Integer>)(List<?>) MySQLUtil.getQuery(conn, "quiz_id", "quizzes_taken", "quiz_id");
+		List<Integer> mostPopularQuizIds = Arrays.asList(-1,-2,-3,-4,-5);
+		List<Integer> mostPopularQuizCounts = Arrays.asList(0,0,0,0,0);
+		for (int i = 0; i < quizzesTaken.size(); i++) {
+			Integer start = quizzesTaken.get(i);
+			int iter = 0;
+			while (quizzesTaken.size() > i && start.equals(quizzesTaken.get(i))) {
+				iter ++;
+				i ++;
+			}
+			for (int j = 0; j < mostPopularQuizIds.size(); j++) {
+				if (mostPopularQuizCounts.get(j) < iter) {
+					if (j > 0) {
+						mostPopularQuizCounts.set(j-1, mostPopularQuizCounts.get(j));
+						mostPopularQuizIds.set(j-1, mostPopularQuizIds.get(j));
+					}
+					mostPopularQuizCounts.set(j, iter);
+					mostPopularQuizIds.set(j, start);
+				}
+			}
+			i --;
+		}
+		request.setAttribute("popularQuizCounts", mostPopularQuizCounts);
+		return mostPopularQuizIds;
+	}
+
+}

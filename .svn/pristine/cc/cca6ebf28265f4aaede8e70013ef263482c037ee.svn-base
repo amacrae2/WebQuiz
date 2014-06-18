@@ -1,0 +1,35 @@
+package quizweb;
+
+import java.sql.*;
+
+public class QuizCreator {
+	private Statement stmt;
+	
+	public QuizCreator(Statement stmt) {
+		this.stmt = stmt;
+	}
+	
+	public int createQuizInfo(String title, String author, String date, String description, String random, String multi, String immedi) throws SQLException {
+		stmt.executeUpdate("INSERT INTO quizzes (title, author, date, description, random, multi, immedi) VALUES ('"+title+"', '"+author+"', '"+date+"', '"+description+"', '"+random+"', '"+multi+"', '"+immedi+"');");
+		ResultSet rs = stmt.executeQuery("SELECT LAST_INSERT_ID();");
+		rs.next();
+		int quizId = rs.getInt(1);
+		return quizId;
+	}
+	
+	public void createQuestionResponse(int type, int quizId, String title, String text, String answer) throws SQLException {
+		stmt.executeUpdate("INSERT INTO questions (type, quiz_id, title, text, answer) VALUES ('"+type+"', '"+quizId+"', '"+title+"', '"+text+"', '"+answer+"');");
+	}	
+	
+	public void createFillBlank(int type, int quizId, String title, String text, String answer) throws SQLException {
+		stmt.executeUpdate("INSERT INTO questions (type, quiz_id, title, text, answer) VALUES ('"+type+"', '"+quizId+"', '"+title+"', '"+text+"', '"+answer+"');");
+	}
+	
+	public void createMultiChoice(int type, int quizId, String title, String text, String choices, String answer) throws SQLException {
+		stmt.executeUpdate("INSERT INTO questions (type, quiz_id, title, text, choices, answer) VALUES ('"+type+"', '"+quizId+"', '"+title+"', '"+text+"', '"+choices+"', '"+answer+"');");
+	}
+	
+	public void createPictureResponse(int type, int quizId, String title, String text, String url, String answer) throws SQLException {
+		stmt.executeUpdate("INSERT INTO questions (type, quiz_id, title, text, picture_url, answer) VALUES ('"+type+"', '"+quizId+"', '"+title+"', '"+text+"', '"+url+"', '"+answer+"');");
+	}
+}

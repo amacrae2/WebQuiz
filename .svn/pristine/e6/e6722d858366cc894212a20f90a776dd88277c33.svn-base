@@ -1,0 +1,272 @@
+<%@page import="quizweb.QuizWebConstants"%>
+<%@page import="com.mysql.jdbc.Connection"%>
+<%@page import="quizweb.AchievementManager"%>
+<%@page import="quizweb.HistoryRow"%>
+<%@page import="quizweb.MySQLUtil"%>
+<%@ page import="java.util.*" %>
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" /> 
+<title>Home</title> 
+<style>
+table,th,td
+{
+border:1px solid black;
+}
+</style>
+<script type="text/javascript" src="sortable.js"></script>
+</head>
+<body>
+<h1>Welcome <%= session.getAttribute("user") %>!</h1>
+<p><form action="LogoutServlet" method="post"><input type="submit" value="Log Out"></form></p>
+
+<%
+Connection conn = (Connection) session.getAttribute("connection");
+String username = (String) session.getAttribute("user"); 
+if (AchievementManager.amateurAuthor(conn, username)) {
+	AchievementManager.addAchievement(conn, QuizWebConstants.AMATUER_AUTHOR, username);
+	%>
+	<h3>You Earned The Achievement <%=QuizWebConstants.AMATUER_AUTHOR%>!</h3>
+	<%
+}
+if (AchievementManager.prolificAuthor(conn, username)) {
+	AchievementManager.addAchievement(conn, QuizWebConstants.PROLIFIC_AUTHOR, username);
+	%>
+	<h3>You Earned The Achievement <%=QuizWebConstants.PROLIFIC_AUTHOR%>!</h3>
+	<%
+}
+if (AchievementManager.prodigiousAuthor(conn, username)) {
+	AchievementManager.addAchievement(conn, QuizWebConstants.PRODIGIOUS_AUTHOR, username);
+	%>
+	<h3>You Earned The Achievement <%=QuizWebConstants.PRODIGIOUS_AUTHOR%>!</h3>
+	<%
+}
+%>
+
+<p><a href="create_quiz_info.html">Create a Quiz</a></p>
+<p><a href="quizlist.jsp">Take a Quiz</a></p>
+<p><a href="users_list.jsp">Find a User</a></p>
+
+<h2>Most Popular Quizzes:</h2>
+<table class="sortable" id="anyid">
+	<tr>
+		<th>Quiz</th>
+		<th>Times Taken</th>
+	</tr>
+<% 
+List<String> popularQuizzes = (List<String>)(List<?>) request.getAttribute("popularQuizzes");
+List<Integer> popularQuizIds = (List<Integer>)(List<?>) request.getAttribute("popularQuizIds");
+List<Integer> popularQuizCounts = (List<Integer>)(List<?>) request.getAttribute("popularQuizCounts");
+for (int i = popularQuizzes.size(); i > 0; i--) {
+	String quizUrl = "QuizSummaryServlet?quiz_id="+popularQuizIds.get(i-1);
+	%>
+     <tr>      
+         <td><a href=<%=quizUrl%>><%=popularQuizzes.get(i-1)%></a></td>
+         <td><%=popularQuizCounts.get(i-1)%> Times</td>
+     </tr>
+ <% } %>
+ </table>
+ <br>
+ 
+ 
+<h2>Recently Created Quizzes:</h2>
+<table class="sortable" id="anyid">
+	<tr>
+		<th>Quiz</th>
+		<th>Date Created</th>
+	</tr>
+<% 
+List<String> recentlyCreatedQuizNames = (List<String>)(List<?>) request.getAttribute("recentlyCreatedQuizNames");
+List<Integer> recentlyCreatedQuizIds = (List<Integer>)(List<?>) request.getAttribute("recentlyCreatedQuizIds");
+List<String> recentlyCreatedQuizCreateTimes = (List<String>)(List<?>) request.getAttribute("recentlyCreatedQuizTimes");
+for (int i = 0; i < recentlyCreatedQuizIds.size(); i++) {
+	String quizUrl = "QuizSummaryServlet?quiz_id="+recentlyCreatedQuizIds.get(i);
+	%>
+     <tr>      
+         <td><a href=<%=quizUrl%>><%=recentlyCreatedQuizNames.get(i)%></a></td>
+         <td><%=recentlyCreatedQuizCreateTimes.get(i)%></td>
+     </tr>
+ <% } %>
+ </table>
+  <br>
+ <a href="quizlist.jsp">See All Quizzes</a>
+ 
+ 
+<h2>Your Recently Taken Quizzes:</h2>
+<table class="sortable" id="anyid">
+	<tr>
+		<th>Quiz</th>
+	</tr>
+<% 
+List<String> recentlyTakenQuizNames = (List<String>)(List<?>) request.getAttribute("recentlyTakenQuizNames");
+List<Integer> recentlyTakenQuizIds = (List<Integer>)(List<?>) request.getAttribute("recentlyTakenQuizIds");
+for (int i = 0; i < recentlyTakenQuizIds.size(); i++) {
+	String quizUrl = "QuizSummaryServlet?quiz_id="+recentlyTakenQuizIds.get(i);
+	%>
+     <tr>      
+         <td><a href=<%=quizUrl%>><%=recentlyTakenQuizNames.get(i)%></a></td>
+     </tr>
+ <% } %>
+  </table>
+    <br>
+ <a href="quizlist.jsp">See All Quizzes</a>
+ 
+ 
+<h2>Your Recently Created Quizzes:</h2>
+<table class="sortable" id="anyid">
+	<tr>
+		<th>Quiz</th>
+		<th>Date Created</th>
+	</tr>
+<% 
+List<String> recentlyCreatedUserQuizNames = (List<String>)(List<?>) request.getAttribute("recentlyCreatedUserQuizNames");
+List<Integer> recentlyCreatedUserQuizIds = (List<Integer>)(List<?>) request.getAttribute("recentlyCreatedUserQuizIds");
+List<String> recentlyCreatedUserQuizCreateTimes = (List<String>)(List<?>) request.getAttribute("recentlyCreatedUserQuizTimes");
+for (int i = 0; i < recentlyCreatedUserQuizIds.size(); i++) {
+	String quizUrl = "QuizSummaryServlet?quiz_id="+recentlyCreatedUserQuizIds.get(i);
+	%>
+     <tr>      
+         <td><a href=<%=quizUrl%>><%=recentlyCreatedUserQuizNames.get(i)%></a></td>
+         <td><%=recentlyCreatedUserQuizCreateTimes.get(i)%></td>
+     </tr>
+ <% } %>
+ </table>
+ <br>
+ <a href="quizlist.jsp">See All Quizzes</a>
+ 
+ 
+<h2>History:</h2>
+<table class="sortable" id="anyid">
+     <tr>      
+         <th>Quiz</th>
+         <th>Score</th>
+         <th>Percent Correct</th>
+         <th>Date Taken</th>
+     </tr>
+<% 
+List<HistoryRow> userHistory = (List<HistoryRow>)(List<?>) request.getAttribute("userHistory");
+String moreUrl = "HistoryList.jsp?user="+session.getAttribute("user");
+for (int i = 0; i < userHistory.size(); i++) {
+	HistoryRow hRow = userHistory.get(i);
+	String quizUrl = "QuizSummaryServlet?quiz_id="+hRow.getQuizId();
+	%>
+     <tr>      
+         <td><a href=<%=quizUrl%>><%=hRow.getQuizTitle()%></a></td>
+         <td><%=hRow.getScore()%></td>
+		 <td><%=hRow.getPercentCorrect()%></td>
+         <td><%=hRow.getDateTaken()%></td>
+     </tr>
+ <% } %>
+ </table>
+ <br>
+ <a href=<%=moreUrl%>>See Full History</a>
+ 
+<h2>Achievements:</h2>
+<ul>
+<%
+List<String> achievements = AchievementManager.getAchievements(conn, username);
+for (int i = 0; i < achievements.size(); i++) {
+	%>
+		<li><%=achievements.get(i)%></li>
+	<%
+}
+%>
+</ul>
+
+<h2>Messages:</h2>
+<% int numUnread = (Integer) request.getAttribute("NumUnread"); %>
+<p><a href="send_message.jsp">Send a Message</a></p>
+<p><a href="unread.jsp">Unread (<%=numUnread %>)</a></p>
+<p><a href="inbox.jsp">Inbox</a></p>
+<p><a href="outbox.jsp">Outbox</a></p>
+
+<h2>Friends:</h2>
+<ul>
+<% 
+List<String> friendsList = (List<String>)(List<?>) request.getAttribute("friendsList");
+for (int i = 0; i < friendsList.size(); i++) {
+	String friend = friendsList.get(i);
+	String friendPageUrl = "UserPageServlet?user="+friend;
+	%>   
+       <li><a href=<%=friendPageUrl%>><%=friend%></a></li>
+ <% } %>
+</ul>
+
+<h2>Friends Recent Activities</h2>
+<h3>Recent Quizzes Taken by Friends:</h3>
+<table class="sortable" id="anyid">
+	<tr>
+		<th>Quiz</th>
+	</tr>
+<% 
+List<String> recentlyTakenFriendQuizNames = (List<String>)(List<?>) request.getAttribute("recentlyTakenFriendQuizNames");
+List<Integer> recentlyTakenFriendQuizIds = (List<Integer>)(List<?>) request.getAttribute("recentlyTakenFriendQuizIds");
+for (int i = 0; i < recentlyTakenFriendQuizIds.size(); i++) {
+	String quizUrl = "QuizSummaryServlet?quiz_id="+recentlyTakenFriendQuizIds.get(i);
+	%>
+     <tr>      
+         <td><a href=<%=quizUrl%>><%=recentlyTakenFriendQuizNames.get(i)%></a></td>
+     </tr>
+ <% } %>
+  </table>
+    <br>
+ <a href="quizlist.jsp">See All Quizzes</a>
+
+<h3>Recent Quizzes Created by Friends:</h3>
+<table class="sortable" id="anyid">
+	<tr>
+		<th>Author</th>
+		<th>Quiz</th>
+		<th>Date Created</th>
+	</tr>
+<% 
+List<String> recentlyCreatedFriendQuizNames = (List<String>)(List<?>) request.getAttribute("recentlyCreatedFriendQuizNames");
+List<Integer> recentlyCreatedFriendQuizIds = (List<Integer>)(List<?>) request.getAttribute("recentlyCreatedFriendQuizIds");
+List<String> recentlyCreatedFriendQuizCreateTimes = (List<String>)(List<?>) request.getAttribute("recentlyCreatedFriendQuizTimes");
+List<String> recentlyCreatedFriendQuizCreateAuthors = (List<String>)(List<?>) request.getAttribute("recentlyCreatedFriendQuizAuthors");
+for (int i = 0; i < recentlyCreatedFriendQuizIds.size(); i++) {
+	String quizUrl = "QuizSummaryServlet?quiz_id="+recentlyCreatedFriendQuizIds.get(i);
+	String authorUrl = "UserPageServlet?user="+recentlyCreatedFriendQuizCreateAuthors.get(i);
+	%>
+     <tr>   
+     	 <td><a href=<%=authorUrl%>><%=recentlyCreatedFriendQuizCreateAuthors.get(i)%></a></td>  
+         <td><a href=<%=quizUrl%>><%=recentlyCreatedFriendQuizNames.get(i)%></a></td>
+         <td><%=recentlyCreatedFriendQuizCreateTimes.get(i)%></td>
+     </tr>
+ <% } %>
+ </table>
+ <br>
+ <a href="quizlist.jsp">See All Quizzes</a>
+
+<h3>Achievements Earned by Friends:</h3>
+<%
+for (int i = 0; i < friendsList.size(); i++) {
+	String friend = friendsList.get(i);
+	String friendPageUrl = "UserPageServlet?user="+friend;
+	%>
+	<h4><a href=<%=friendPageUrl%>><%=friend%></a></h4>
+	<ul>
+	<%
+	List<String> friendAchievements = AchievementManager.getAchievements(conn, friend);
+	if (friendAchievements.size() == 0) {
+		%>
+			<li>None</li>
+		<%
+	} else {
+		for (int j = 0; j < friendAchievements.size(); j++) {
+			%>
+				<li><%=friendAchievements.get(j)%></li>
+			<%
+		}
+	}
+	%>
+	</ul> 
+	<%
+}
+%>
+
+</body>
+</html>

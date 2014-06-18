@@ -1,0 +1,41 @@
+Team Members: Jin Zhang, Alec Macrae
+
+This application supports the following features:
+1. Account
+	1.1 Create new account: store password as salt and digest 
+	1.2 Login: try again if information is not correct
+2. Quiz
+	2.1 Create and take a quiz: support 6 question types, 4 quiz options
+	2.2 Quiz summary page: display quiz info, various kinds of history and statitics of this quiz
+	2.3 Quiz result page: display result info, various kinds of history and statitics of this quiz
+3. History
+	3.1 Homepage: display various info, such as popular quizzes, recent quiz activities of the user and all users
+	3.2 User Page: display the user's recent various quiz activities
+	3.3 Quiz summary and result page: (see above 2.3)
+	3.4 Usually when name appears on the page, there is a hyperlink to this user's page 
+4. Friends
+	4.1 Find a friend: go to a list of user, allow searching for a user in the search bar
+	4.2 Friend List: list the user's friends (hyperlinks to their userpage)
+	4.3 User Page: if not friend, add button appears; otherwise, remove and challenge buttons appears
+			-add button: send a message, will appear in the outbox but cannot be accepted
+			-remove button: remove the database record directly
+5. Messages
+	4.1 Homepage: show number of unread messages, link to unread message list, inbox and outbox
+	4.2 Challenge: can be sent multiple times; appear both on user pages and quiz pages
+	4.3 Friend: accept button in side the message; can be sent multiple times before they become friends, but only get added once
+6. Extensions Highlight
+	6.1 Achievements
+	6.2 History
+	6.3 Multi Blank Question: allow as many blanks as user wants anywhere in fill blank questions
+	6.4 Multi Answer Question: support in order or not
+	6.5 Administration
+	6.6 Trivial
+		6.5.1 make grading case insensitive and not picky on space difference
+		6.5.2 Hide password while typing
+		6.5.3 display whether answers are true or false on result page
+		6.5.4 multiple alternative answers for each score
+		6.5.5 show unread messages: mark a message as "read" only when the to_user clicked on it
+		6.5.6 accepting request from an existing friend redirects to a notice page instead of adding duplicate records to database (but users are allowed to send multiple requests before the friend relationship is built in database)
+		6.5.7 enable users to see their sent friend requests and challenge requests in outbox (but the accept button in friend requests won't work)
+		6.5.8 display number of questions on quiz summary and result pages 
+		6.5.9 support percent correct comparison of scores

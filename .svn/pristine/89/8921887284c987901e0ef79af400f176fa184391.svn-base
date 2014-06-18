@@ -1,0 +1,6 @@
+<p>Question Title: </p>
+<p><textarea rows="1" cols="50" name="question_title"></textarea></p>
+<p>Question: (Please indicate the blank by '_') </p>
+<p><textarea rows="4" cols="50" name="question_text"></textarea></p>
+<p>Correct Answers: (Please separate each answer by ';')</p>
+<p><textarea rows="4" cols="50" name="correct_answers"></textarea></p>
